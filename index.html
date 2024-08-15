@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Autom SERP</title>
+    <link href="https://cdn.jsdelivr.net/npm/@chakra-ui/react@2.3.8/dist/chakra-ui.css" rel="stylesheet">
+    <style>
+        #loading {
+            display: none;
+            position: fixed;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 20px;
+            border-radius: 2px;
+            font-size: 18px;
+            text-align: center;
+            z-index: 9999;
+        }
+
+        .loader {
+            border: 8px solid #f3f3f3;
+            border-top: 8px solid #3498db;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        #logo {
+            max-width: 30px;
+        }
+
+        .results-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .results-container table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .results-container th,
+        .results-container td {
+            padding: 8px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .results-container td {
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .results-container td.snippet {
+            max-width: 300px;
+            white-space: normal;
+        }
+
+        .results-container td.snippet .full-snippet {
+            display: none;
+            position: absolute;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            padding: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            max-width: 400px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .results-container td.snippet:hover .full-snippet {
+            display: block;
+        }
+
+        /* Container styles for left and right panels */
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="left-panel" style="flex: 1; max-width: 400px;">
+            <img id="logo" src="logo.png" alt="Autom" style="display: block;">
+            <h1 style="font-size: 1.5rem; font-weight: bold; margin-bottom: 0.5rem;">Autom SERP</h1>
+
+            <p style="margin-bottom: 1rem; color: #4A5568;">
+                This extension helps you find websites by scraping Google’s SERP.<br>
+                Get started with <strong>1,000 free queries</strong>! 🎁<br>
+            </p>
+
+            <div style="margin-bottom: 1rem;">
+                <a href="https://autom.dev/login" style="padding: 0.5rem; background-color: #48BB78; color: white; border-radius: 2px; text-decoration: none;">Log In</a>
+            </div>
+
+            <div class="input-group" style="margin-bottom: 1rem;">
+                <input type="password" id="apiKey" placeholder="Enter API Key" style="padding: 0.5rem; width: 100%; border-radius: 2px; border: 1px solid #E2E8F0;">
+                <div style="display: flex; margin-top: 0.5rem;">
+                    <button id="toggleApiKey" style="padding: 0.5rem; background-color: #ECC94B; border-radius: 2px; border: none;">Show API Key</button>
+                    <span id="apiUsage" style="padding: 0.5rem; color: #4A5568; margin-left: 0.5rem;" />
+                </div>
+            </div>
+
+            <div style="margin-bottom: 1rem;">
+                <label for="searchMode" style="display: flex; align-items: center; color: #4A5568;">Mode</label>
+                <select id="searchMode" style="padding: 0.5rem; width: 100%; border-radius: 2px; border: 1px solid #E2E8F0; margin-top: 0.5rem;">
+                    <option value="companyURL">Company Name to Company URL</option>
+                    <option value="linkedinCompanyURL">Company Name to Linkedin Company URL</option>
+                    <option value="linkedinProfileURL">Name to Linkedin Profile URL</option>
+                </select>
+            </div>            
+
+            <textarea id="companyNames" placeholder="Enter company names, one per line (e.g., 'Google', 'Facebook')" rows="8" style="padding: 0.5rem; width: 100%; border-radius: 2px; border: 1px solid #E2E8F0; margin-bottom: 1rem;"></textarea>
+
+            <div style="margin-bottom: 1rem;">
+                <label style="display: flex; align-items: center; color: #4A5568;">
+                    <input type="checkbox" id="keepFirstResult" checked style="margin-right: 0.5rem;">
+                    Keep only the first result
+                </label>
+            </div>
+
+            <div style="margin-bottom: 1rem;">
+                <div style="display: flex; margin-top: 0.5rem;">
+                    <button id="searchButton" style="padding: 0.5rem; background-color: #3182CE; color: white; border-radius: 2px; border: none;">Search</button>
+                    <button id="clearResultsButton" style="padding: 0.5rem; background-color: #A0AEC0; border-radius: 2px; border: none; margin-left: 0.5rem;">Clear Results</button>
+                </div>
+            </div>
+
+            <button id="downloadButton" style="display:none; width: 100%; padding: 0.5rem; background-color: #38A169; color: white; border-radius: 2px; border: none;">Download Results</button>
+        </div>
+
+        <div class="right-panel" style="flex: 2; padding: 20px; overflow-y: auto;">
+            <div id="resultsContainer" class="results-container">
+                <!-- Search results will be displayed here -->
+            </div>
+        </div>
+    </div>
+
+    <div id="loading" class="flex flex-col items-center">
+        <div class="loader"></div>
+        <p style="margin-top: 0.5rem;">Loading, please wait...</p>
+    </div>
+
+    <script src="index.js"></script>
+</body>
+
+</html>
